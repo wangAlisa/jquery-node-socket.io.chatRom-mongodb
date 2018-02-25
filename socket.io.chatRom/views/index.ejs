@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		*{
+			margin: 0;
+			padding: 0;
+			list-style: none;
+			text-decoration: none;
+			font-weight: normal;
+			font-style: normal;
+		}
+		div.header{
+
+		}
+		div .container{
+			width:980px;
+			margin: 0 auto;
+		}
+		.header .container{
+			height:100px;
+		}
+		.clear:after{
+			content:"";
+			display: block;
+			clear: both;
+		}
+		h1{
+			float: left;
+			height:100%;
+		}
+		.user{
+			width:300px;
+			height:100%;
+			float: right;
+			overflow: hidden;
+			line-height: 100px;
+			font-size: 20px;
+			text-align: center;
+		}
+		.head_pic{
+			height:100%;
+			width:100px;
+			float: left;
+		}
+		.username{
+			height:100%;
+			width:100px;
+			float: left;
+		}
+		.exit{
+			height:100%;
+			width:100px;
+			float: left;
+		}
+		img{
+			width:100%;
+			height:auto;
+		}
+		.message_list{
+			float: left;
+ 			width:500px;
+			overflow: auto;
+			height:400px;
+			box-sizing:border-box;
+			border:1px solid gray;
+		}
+		.user_list{
+			float: left;
+			width:40px;
+		}
+		.message_list li{
+			border-bottom:1px solid #ccc;
+		}
+		.message_list li img{
+			width:40px;
+		}
+		.inp{
+			float: left;
+			width:50%;
+		}
+		.btn{
+			width:50%;
+			float: left;
+		}
+		.abc{
+			width:100%;
+			font-size: 30px;
+		}
+	</style>
+</head>
+<body>
+    <% if(hasLogin){%>
+			  <div class="header">
+			  	<div class="container clear">
+			  		<h1>欢迎使用聊天室功能</h1>
+			  		<div class="user clear">
+			  			<div class="head_pic">
+			  				<img src="<%=head_pic%>" alt="">
+			  			</div>
+			  			<div class="username">
+			  				<%=username%>
+			  			</div>
+			  			<div class="exit">
+			  				<a href="/exit">退出</a>
+			  			</div>
+			  		</div>
+			  	</div>
+			  </div>
+			  <!-- 聊天部分 -->
+			  <div class="body"> 
+					<div class="container clear">
+						<ul class="user_list">
+							
+						</ul>
+						<ul class="message_list">
+							 
+						</ul>
+					</div>
+			  </div>
+			  <div class="footer">
+			  	<div class="container clear">
+			  		<div class="inp">
+			  			<input type="text" id="inp"> 
+			  			<input type="button" id="btn" value="发送">
+			  		</div>
+			  	</div>
+			  </div>
+    <%}else {%>
+			 <a href="/regist.html">注册</a>
+			 <a href="/login.html">登录</a>
+    <%}%>
+    <!-- 这个页面此时是服务端页面，携带的文件是下面这个socket.io.js文件 当有浏览器访问的时候服务器就会将这个ejs页面渲染并发送到客户端 那么这个js文件就跟着下去了 浏览器页面就有了socket.io.js文件了。 此时我们在服务器上事先写好一个程序-->
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="js/jquery-1.7.2.js"></script>
+    <script type="text/javascript"> 
+       //第六步  
+      if(<%=hasLogin%>){
+       var socket = io();
+       var $inp = $("#inp");
+       var $btn = $("#btn");
+       var $username = $(".username").html();
+       var $message_list = $(".message_list");
+       var $user_list= $(".user_list");
+       // 使用委托模式
+       $user_list.on("click","input",function(){
+       	  // 先确定要踢谁
+       	  var userid = $(this).prev().attr("data_id");
+       	  
+       		// 向后台发送信息 要踢这个人
+       		socket.emit("kick",userid)
+       })
+
+       var user = {};
+       <% var qx = quanxian ? quanxian : 1 ; %>
+       user.userid = "<%=userid%>";
+       user.username = "<%=username%>";
+       user.quanxian = "<%=qx%>";
+       user.head_pic ="<%=head_pic%>";
+       // 自动触发一个事件 叫做我来了
+       socket.emit("Iamcoming",user);
+       // (1)点击事件中 我们使用socket触发后端监听的zha事件此时会通知后端 
+       $btn.click(function(){ 
+       	  //emit表示触发 引发 的意思
+       	  var obj = {
+       	  	me:$username,
+       	  	message:$inp.val(),
+       	  	href: user.head_pic
+       	  }
+       	  socket.emit("zha",obj); 
+       	  $inp.val("");
+       })
+       // 当用户登录的时候 自动触发一个事件 
+       	//加等号  if(true)
+        //不加等号  if()
+       // (4) 监听say事件。定义触发say的时候要做的事情 至此一个流程结束
+       socket.on("say",function(data){
+       	var li = $("<li><img src="+data.href+" /><span>"+data.me+"</span>说: <span>"+data.message+"</span></li>")
+      		$message_list.append(li);
+      		$(".message_list").scrollTop(10000000000);
+       })
+       // 有人来了
+       socket.on("someonecome",function(allUsers){
+       	// alert("有人来了")
+       	// console.log(allUsers)
+       	// 获得到所有人的信息之后 我们可以重新组建dom
+       	var ulstr = "";
+       	var listr = "";
+       	for(var i in allUsers){
+       		// 组建一个li
+       		listr= "<li>"+"<span data_id='"+allUsers[i].userid+"'>"+allUsers[i]["username"]+"</span><% if(qx=='4'){%><input type='checkbox' /><%}%>"+"</li>";
+       		ulstr+=listr;
+       	}
+       	$(".user_list").html(ulstr);
+       	// 可以放在这里 不推荐 
+		    //    	$(".user_list li input").click(function(){
+		    //    		console.log(123)
+				// })
+       })
+       socket.on("welcome",function(user){
+       		var li = $("<li class='abc'>"+user.username+"来了，欢迎!</li>")
+      		$message_list.append(li);
+       })
+       socket.on("byebye",function(user){
+       		var li = $("<li class='abc'>"+user.username+"走了，欢送!</li>")
+      		$message_list.append(li);
+       })
+       // 添加事件
+			 // alert("添加事件") 这种书写方式是不成功的，因为前后端通信是异步操作。所以会后执行dom的渲染而先执行下面的事件添加操作
+       socket.on("tizou",function(userid){
+       	if(userid === user.userid){
+       		// 主动断开 
+       		socket.disconnect();
+       		// 重置路由
+       		location.href="http://localhost:3000/";
+       	}
+       })
+      } 
+    </script>
+</body>
+</html>

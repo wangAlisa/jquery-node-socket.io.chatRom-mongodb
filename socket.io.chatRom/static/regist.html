@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<link rel="stylesheet" href="/css/reset.css">
+	<style type="text/css">
+		form{
+			width:500px;
+			height:300px;
+			text-align: center;
+			margin:0 auto;
+		}  
+	</style>
+</head>
+<body>
+	<form action="/regist" method="post" enctype="multipart/form-data">
+		  用户编号: <input type="number" name="userid" id="id"></br>
+			用户名称: <input type="text" name="username" id="username"></br>
+			用户头像: <input type="file" name="user_pic">
+			用户密码： <input type="password" name="password" ></br> 
+			<input type="submit" id="submit">
+	</form>
+	<script type="text/javascript" src="/js/jquery-1.7.2.js"></script>
+	<script type="text/javascript">
+	   var id_lock  = false;
+	   var user_lock = false;
+		 var $username = $("#username");
+		 
+		 var $id = $("#id");
+		 $id.blur(function(){
+		  	var val = this.value;
+		  	if(val === ""){
+		  		id_lock=false;
+		  		return;
+		  	}
+		  	$.ajax({
+		  		type:"post",
+		  		url:"/check_name",
+		  		data:{
+		  			check: "userid",
+		  			userid:val
+		  		},
+		  		dataType:"json",
+		  		success:function(data){
+		  			console.log(data);
+		  			if(!data.errno){
+		  			console.log("可以注册");
+		  			id_lock=true;
+		  		}else {
+		  			console.log(data.data);
+		  			id_lock=false;
+		  		}
+		  		}
+		  	})
+		  }) 
+		 $username.blur(function(){
+		 	var val = this.value;
+		 	// 首先确定是否有值
+		  if(!val){
+		  	user_lock=false;
+		  	return;
+		  }
+		  // 使用正则对其进行判定
+		  var reg = /.{2,8}/;
+		  if(!reg.test(val)){
+		  	user_lock = false;
+		  	console.log("不符合要求");
+		  	return;
+		  }
+		  // 发送ajax
+		  $.ajax({
+		  	type:"post",
+		  	url:"/check_name",
+		  	data:{
+		  		check:"username",
+		  		username:val
+		  	},
+		  	dataType:"json",
+		  	success:function(data){
+		  		console.log(data);
+		  		if(!data.errno){
+		  			console.log("可以注册");
+		  			user_lock=true;
+		  		}else {
+		  			console.log(data.data);
+		  			user_lock=false;
+		  		}
+		  	}
+		  })
+		 })
+ 
+		
+		 $("#submit").click(function(){
+		 	console.log(id_lock,user_lock)
+		 	if(!(id_lock && user_lock)){ 
+		 		return false;
+		 	} 
+		 }) 
+	</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+数据库： mongodb
+
+数据库名称：users 
+字段：user_pic varchar ,  存储用户的头像地址
+      userid  int parmarykey,  存储用户的唯一编号
+      username varchar ,  用户的昵称唯一
+      password int ,    密码 
+      quanxian int  1,2,3,4 权限 4为最高 1为基本权限
+后台：nodejs express
